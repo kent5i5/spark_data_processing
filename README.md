@@ -1,8 +1,10 @@
 # ELT Data Processing Project 
 
-## In this project, data will be downloaded from S3 buckets and load into the staging tables. All copied data will then tranform and load into the Star Schema tables created on previous step. By combining the datasets, data analysts can perform the queries to get insightful data in a more effectively.
+## In this project, data will be downloaded from S3 buckets and load into the staging tables. All copied data will then tranform and load into the Star Schema tables created on previous step. By combining the datasets, data analysts can perform the queries to get insightful data in a more effectively. 
 
-## I will use Apache Spark to process my data. Apache Spark is a in-memory processing engine for big data processing which is 10 times faster than traditional Hadoop MapReduce proecessing because it provides high-level operators such as 'map' to process data on run-time instead of read/write from disk.
+## I will use Apache Spark to process my data. Apache Spark is a in-memory processing engine for big data processing which is 10 times faster than traditional Hadoop MapReduce proecessing because it provides high-level operators such as 'map' to process data on run-time instead of read/write from disk. 
+
+## Apache Spark accept both scala and python progamming languages because they are well suited to write pure functions. In this project, I will use python.  In Spark Core, RDD is used to process data which has in-memory computation, lazy evaluations, fault tolerance, partitioning features. Spark SQl provides easier way to process structured data. In this project, I used Spark SQL to proecess my data.
 
 ## Spark supports distributed computing. I will create cluster using Amazon EMR by running follow command.
         aws emr create-cluster --name mySpark \
@@ -10,7 +12,7 @@
         --instance-count 3 --applications Name=Spark Name=Zeppelin  \
         --bootstrap-actions Path="s3://bootstrap.sh" \
         --ec2-attributes KeyName=SparkEMR \
-        --instance-type m5.xlarge --log-uri s3:///emrlogs/
+        --instance-type m5.xlarge --log-uri s3://s3emrlogs/
 
 ## With instance count of 3, I will have one master cluster and two worker clusters. 
 
@@ -18,7 +20,10 @@
 
 1. Create and download the IAM user crediential with s3 and Spark EMR permission
 
-2. Submit the script to spark to run it
+2. Check the clusters with awscli
+        aws emr list-clusters
+
+3. Submit the script to spark to run it
         spark-submit --packages org.apache.hadoop:hadoop-aws:2.7.0 etl.py
 
 # Song Dataset
