@@ -7,14 +7,18 @@ from pyspark.sql.functions import year, month, dayofmonth, hour, weekofyear, dat
 
 
 config = configparser.ConfigParser()
-config.read('dl.cfg')
+# config.read('dl.cfg')
 
-os.environ['AWS_ACCESS_KEY_ID']=config['AWS_ACCESS_KEY_ID']
-os.environ['AWS_SECRET_ACCESS_KEY']=config['AWS_SECRET_ACCESS_KEY']
+# os.environ['AWS_ACCESS_KEY_ID']=config['AWS_ACCESS_KEY_ID']
+# os.environ['AWS_SECRET_ACCESS_KEY']=config['AWS_SECRET_ACCESS_KEY']
 
+config.read_file(open('dl.cfg'))
+
+os.environ['AWS_ACCESS_KEY_ID']=config.get("AWS","AWS_ACCESS_KEY_ID")
+os.environ['AWS_SECRET_ACCESS_KEY']=config.get('AWS','AWS_SECRET_ACCESS_KEY')
 
 def create_spark_session():
-    """ Extract song, log Data from s3, process them with Spark SQL, and save into another S3 bucket"""
+    """ Create spark session to process dataframe/spark sql """
     
     spark = SparkSession \
         .builder \
@@ -29,6 +33,12 @@ def create_spark_session():
 
 
 def process_song_and_log_data(spark, input_data, output_data):
+    """ Extract song, log Data from s3, process them with Spark SQL, and save into another S3 bucket
+         :param spark: Spark session
+        :param input_data: S3 bucket url(name) contains song_data and log_data folder
+        :param output_data: s3 bucket url(name) which will store the processed data
+    """
+    
     # get filepath to song data file
     song_data = os.path.join(input_data, "song_data/A/*/*/*.json")
     
@@ -42,10 +52,10 @@ def process_song_and_log_data(spark, input_data, output_data):
     songs_table = spark.sql("SELECT DISTINCT song_id, title, artist_id, year,duration FROM song_data")
     
     # write songs table to parquet files partitioned by year and artist
-    songs_table.write.parquet(output_data+ "/songs/", mode="overwrite")
+    songs_table.write.partitionBy("year", "artist_id").parquet(output_data+ "/songs/", mode="overwrite")
 
     # extract columns to create artists table
-    artists_table = artist_table = spark.sql("SELECT distinct artist_id, artist_name, artist_location, artist_latitude, artist_longitude FROM song_data")
+    artists_table = spark.sql("SELECT distinct artist_id, artist_name, artist_location, artist_latitude, artist_longitude FROM song_data")
     
     # write artists table to parquet files
     artists_table.write.parquet(output_data+ "/artists/", mode="overwrite")
@@ -96,7 +106,7 @@ def process_song_and_log_data(spark, input_data, output_data):
     songplays_table.createOrReplaceTempView("song_plays")
 
     # write songplays table to parquet files partitioned by year and month
-    songplays_table.write.parquet(output_data+ "/song_plays/", mode="overwrite")
+    songplays_table.write.partitionBy("year", "month").parquet(output_data+ "/song_plays/", mode="overwrite")
     
     # extract columns to create time table
     time_table = spark.sql("""
@@ -108,7 +118,7 @@ def process_song_and_log_data(spark, input_data, output_data):
     """)
     
     # write time table to parquet files partitioned by year and month
-    time_table.write.parquet(output_data+ "/time/", mode="overwrite")
+    time_table.write.partitionBy("year", "month").parquet(output_data+ "/time/", mode="overwrite")
 
 
 def main():
